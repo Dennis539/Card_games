@@ -15,8 +15,15 @@
 import random
 import pygame
 import os
+import sys
+import time
 
-os.chdir('C:\\Users\\Dennis\\OneDrive\\Documenten\\Programming in Python\\Pet projects\\Card_games')
+pygame.font.init()
+WIDTH, HEIGHT = 1000, 700
+WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption('Blackjack')
+
+os.chdir('C:\\Users\\Dennis\\OneDrive\\Documenten\\Programming in Python\\Pet projects')
 suits = ('Hearts', 'Diamonds', 'Spades', 'Clubs')
 ranks = ('Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Ace')
 values = {'Two':2, 'Three':3, 'Four':4, 'Five':5, 'Six':6, 'Seven':7, 'Eight':8, 
@@ -26,14 +33,43 @@ card_image_dict = {}
 for rank in ranks:
     for suit in suits:
         card_name = f'{rank}_of_{suit}'
-        card_image_dict[card_name] = pygame.image.load(os.path.join('assets', card_name + '.png'))
+        scale = pygame.image.load(os.path.join('assets', card_name + '.png'))
+        card_image_dict[card_name] = pygame.transform.scale(scale, (100,200))
+
+BG = pygame.image.load(os.path.join('assets', 'poker_table.png'))
+BG = pygame.transform.scale(BG, (1000, 800))
+
+forfeit_img = pygame.image.load(os.path.join('assets', 'forfeit.jpg'))
+forfeit_img = pygame.transform.scale(forfeit_img, (200, 100))
+
+hit_image = pygame.image.load(os.path.join('assets', 'Hit_button.png'))
+hit_image = pygame.transform.scale(forfeit_img, (200, 100))
+
+class Button():
+    def __init__(self, x, y, image):
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.clicked = False
+
+    def draw(self, window):
+        action = False
+        pos = pygame.mouse.get_pos()
+        if self.rect.collidepoint(pos):
+            # Checks whether the left mouse button is being clicked.
+            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+                self.clicked = True
+                action = True
 
 
+        if pygame.mouse.get_pressed()[0] == 0:
+            self.clicked = False
 
 
+        window.blit(self.image, (self.rect.x, self.rect.y))
 
+        return action
 
-#%%
 
 class Card():
     def __init__(self, suit, rank, img):
@@ -42,8 +78,13 @@ class Card():
         self.value = values[rank]
         self.img = img
 
+
     def __str__(self):
         return self.rank + ' of ' + self.suit
+
+
+    def draw(self, window, x, y):
+        window.blit(self.img, (x, y))
 
 class Deck():
     
@@ -59,6 +100,7 @@ class Deck():
 
     def shuffle_deck(self):
         random.shuffle(self.all_cards)
+
 
     def deal_one(self):
         return self.all_cards.pop(0)
@@ -105,6 +147,9 @@ class Player():
         self.budget = 1000
         self.aces = []
 
+    def show_card(self, window):
+        pass
+
     def add_card(self, new_card):
         self.hand.append(new_card)
 
@@ -143,6 +188,78 @@ def update_hand(user, card):
     user.add_card_rank(card.rank)
     if card.rank == 'Ace':
         user.add_ace(card.rank)
+
+
+forfeit_button = Button(100,200, forfeit_img)
+hit_button = Button(600, 200, hit_image)
+
+def main():
+    run = True
+    computer = Computer()
+    player = Player('Kees')
+    clock = pygame.time.Clock()
+
+
+    main_font = pygame.font.SysFont('comicsans', 20)
+
+    def draw_window():
+        WIN.blit(BG, (0,0))
+            
+        chips_label = main_font.render(f'You have {player.budget} credits', 1, (255,255,255))
+
+        WIN.blit(chips_label, (10,10))
+        pygame.display.update()
+
+    draw_window()
+
+    while run:
+        #clock.tick(60)
+
+        if forfeit_button.draw(WIN):
+            run = False
+            pygame.quit()
+            sys.exit()
+
+        if hit_button.draw():
+            pass
+
+        deck = Deck()
+        deck.shuffle_deck()
+        card1 = deck.deal_one()
+        card1.draw(WIN, 400, 400)
+
+        card2 = deck.deal_one()
+        card2.draw(WIN, 550, 400)
+
+        update_hand(user = player, card = card1)
+        update_hand(user = player, card = card2)
+
+        pygame.display.update()
+
+
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.quit()
+                sys.exit()
+
+main()
+
+pa#%%
+
+        while player.hand_value > 21:
+            
+            x = input('Hit or Stop?:' )
+            if x.lower() == 'stop':
+                pygame.quit()
+                sys.exit()
+
+
+
+
+
+
 
 
 
