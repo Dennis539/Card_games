@@ -175,6 +175,7 @@ class Computer():
 class Player():
     def __init__(self, name):
         self.active_hand = []
+        self.values = []
         self.name = name
         self.budget = 1000
         self.split = False
@@ -194,7 +195,7 @@ class Player():
             print(f'{card.rank} of {card.suit}')
 
     def reset_hand(self):
-        self.hand = []
+        self.active_hand = []
         self.hand_rank = []
         self.hand_value = 0
         self.aces = []
@@ -260,7 +261,7 @@ continue_button = Button(400, 300, continue_image)
 play_button = Button(200, 300, play_button_image)
 start_button = Button(350, 150, start_button_image)
 close_button = Button(350, 350, close_button_image)
-split_button = Button(350, 350, split_button_image)
+split_button = Button(350, 300, split_button_image)
 
 
 def main():
@@ -323,9 +324,10 @@ def main():
             for card in player.active_hand[i].hand:
                 x_pos = (900/(len(player.active_hand[i].hand) + 1)) + dist
                 card.draw(WIN, x_pos, 560)
-                dist += 75
+                dist += 40
 
-            dist_stack += 300
+            dist = dist - (len(player.active_hand[i].hand) * 40)
+            dist_stack = 350 * (i + 1)
 
         if len(computer.hand) == 1:
             card1_comp.draw(WIN, 450, 0)
@@ -447,13 +449,14 @@ def main():
                             draw_window()
                         else:
                             gamestate.player_bust = True
+                            player.values.append(0)
                             break
 
                     if Passing == False:
                         Hit = False
+                        player.values.append(player.active_hand[i].hand_value)
 
-
-
+                
 
 
 
@@ -461,7 +464,7 @@ def main():
             draw_window()
             time.sleep(3)
 
-            if gamestate.player_bust:
+            if set(player.values) == {0}:
                 gamestate.outcome = 'Computer_won'
                 draw_window()
 
@@ -470,16 +473,19 @@ def main():
 
                 update_hand(user = computer, card = card2_comp)   
                 draw_window()
-                
-                if computer.hand_value == player.hand_value and computer.hand_value >= 16 and len(computer.aces) == 0:
-                    gamestate.outcome = 'Tie'
-                    outcome_label = main_font.render(f'Computer passed', 1, (255,255,255))
-                    WIN.blit(outcome_label, (500, 500))
-
-                if computer.hand_value > player.hand_value:
+                if computer.hand_value > max(player.values):
                     gamestate.outcome = 'Computer_won'
 
-            while computer.hand_value < 21 and computer.hand_value < player.hand_value and gamestate.player_bust == False:
+                if len(player.values) == 1:
+                    if computer.hand_value == player.values and computer.hand_value >= 16 and len(computer.aces) == 0:
+                        gamestate.outcome = 'Tie'
+                        outcome_label = main_font.render(f'Computer passed', 1, (255,255,255))
+                        WIN.blit(outcome_label, (500, 500))
+
+
+
+
+            while computer.hand_value < 21 and computer.hand_value < max(player.values) and gamestate.outcome != 'Computer_won':
                 new_card = deck.deal_one()
                 update_hand(user = computer, card = new_card)
 
@@ -500,27 +506,51 @@ def main():
                         gamestate.outcome = 'Player_won'
                         break
 
-                if computer.hand_value > player.hand_value:
+                if computer.hand_value > max(player.values):
 
                     gamestate.outcome = 'Computer_won'
                     break
 
-                if computer.hand_value == player.hand_value and computer.hand_value >= 16 and len(computer.aces) == 0:
+                if len(player.values) == 1:
+                        
+                    if computer.hand_value == player.values[0] and computer.hand_value >= 16 and len(computer.aces) == 0:
+                        gamestate.outcome = 'Tie'
+                        break
 
-                    gamestate.outcome = 'Tie'
-                    break
+                    if computer.hand_value == 21 and player.values[0] == 21:
+                        gamestate.outcome = 'Tie'
+                        break
 
-                if computer.hand_value == 21 and player.hand_value == 21:
-                    gamestate.outcome = 'Tie'
-                    break
+                else:
+                    if computer.hand_value == 21:
+                        pass
+
+                    if computer.hand_value >= 16 and computer.hand_value > min(player.values):
+                        gamestate.outcome = []
+                        for i in player.values:
+                            if player.values < computer.hand_value:
+                                gamestate.outcome.append('Loss')
+
+                            elif player.values > computer.hand_value:
+                                gamestate.outcome.append('Win')
+
+                            else:
+                                gamestate.outcome.append('Draw')
+
+                        break
+
+
+
+
 
                 draw_window()
             draw_window()
-            if gamestate.outcome == 'Player_won':
-                player.add_to_budget(inlay_won = inlay * 2)
+            if len(player.values) == 1:
+                if gamestate.outcome == 'Player_won':
+                    player.add_to_budget(inlay_won = inlay * 2)
 
-            elif gamestate.outcome == 'Tie':
-                player.add_to_budget(inlay_won = inlay)
+                elif gamestate.outcome == 'Tie':
+                    player.add_to_budget(inlay_won = inlay)
 
             
             time.sleep(3)
@@ -584,7 +614,7 @@ player.add_hand(hand1)
 
 player.active_hand[0]
 
-player.active_hand[0].remove_card
+#player.active_hand[0].remove_card
 
 #%%
 
