@@ -189,16 +189,8 @@ class Player():
     def inlay(self, inlay):
         self.budget -= inlay
 
-
-    def show_hand(self):
-        for card in self.hand:
-            print(f'{card.rank} of {card.suit}')
-
     def reset_hand(self):
         self.active_hand = []
-        self.hand_rank = []
-        self.hand_value = 0
-        self.aces = []
 
     def split_hand(self):
         self.split = True
@@ -221,6 +213,7 @@ class GameState():
         self.quit = False
         self.next_round = True
         self.player_bust = False
+        self.show_split_button = True
 
 class Hand():
     def __init__(self):
@@ -381,7 +374,12 @@ def main():
             hand1.update_hand(card1, card1.value, card1.rank)
             hand1.update_hand(card2, card2.value, card2.rank)
             player.add_hand(hand1)
-            #card1.draw(WIN, 500, 500)
+
+            card1_comp = deck.deal_one()
+            update_hand(user = computer, card = card1_comp)
+
+            card1_comp.draw(WIN, 500, 0)
+            WIN.blit(card_backside_image, (650, 0))
 
             draw_window()
             pygame.display.update()
@@ -410,16 +408,12 @@ def main():
                     elif event.type == pygame.QUIT:
                         pygame.quit()
                         sys.exit()
-            card1_comp = deck.deal_one()
-            update_hand(user = computer, card = card1_comp)
 
-            card1_comp.draw(WIN, 500, 0)
-            WIN.blit(card_backside_image, (650, 0))
             draw_window()
 
-            Passing = False
+            
             for i in range(len(player.active_hand)):
-
+                Passing = False
                 while player.active_hand[i].hand_value < 21 and Passing == False:
                     Hit = False
                     
@@ -452,13 +446,11 @@ def main():
                             player.values.append(0)
                             break
 
-                    if Passing == False:
+                    if Passing == True:
                         Hit = False
                         player.values.append(player.active_hand[i].hand_value)
 
                 
-
-
 
             gamestate.turn = 'Computer'
             draw_window()
@@ -539,10 +531,6 @@ def main():
 
                         break
 
-
-
-
-
                 draw_window()
             draw_window()
             if len(player.values) == 1:
@@ -557,8 +545,7 @@ def main():
 
             gamestate.outcome = None
             draw_window()
-            player.reset_hand()
-            computer.reset_hand()
+
             while not gamestate.quit:
                 continue_button.draw(WIN)
                 quit_button.draw(WIN)
@@ -566,6 +553,8 @@ def main():
                 event = pygame.event.wait()
                 if continue_button.draw(WIN):
                     gamestate.reset()
+                    player.reset_hand()
+                    computer.reset_hand()
                     break
 
                 
@@ -580,7 +569,6 @@ def main():
             if not gamestate.next_round:
                 break
 
-            draw_window()
             
 
             if player.budget == 0:
@@ -595,7 +583,7 @@ main()
 
 
 #%%
-
+# Debug only
 
 player = Player('Kees')
 deck = Deck()
@@ -620,314 +608,3 @@ player.active_hand[0]
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#%%
-def main():
-    gamestate = GameState()
-    computer = Computer()
-    player = Player('Kees')
-
-    main_font = pygame.font.SysFont('comicsans', 20)
-
-    def start_screen():
-        WIN.blit(BG, (0,0))
-        start_button.draw(WIN)
-        close_button.draw(WIN)
-        pygame.display.update()
-        while not gamestate.next_round:
-            event = pygame.event.wait()
-            if start_button.draw(WIN):
-                gamestate.next_round = True
-
-            elif close_button.draw(WIN):
-                WIN.blit(BG, (0,0))
-                label = main_font.render(f'Hope to see you next time!', 8, (255,255,255))
-                WIN.blit(label, (400, 350))
-                pygame.display.update()
-                time.sleep(3)
-                pygame.quit()
-                sys.exit()
-
-            elif event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-        pygame.display.update()
-
-    def draw_window():
-        WIN.blit(BG, (0,0))
-            
-        chips_label = main_font.render(f'You have {player.budget} credits', 1, (255,255,255))
-        WIN.blit(chips_label, (10,10))
-
-        if gamestate.turn == 'Player':
-            hit_button.draw(WIN)
-            pass_button.draw(WIN)
-            if player.split_hand:
-                split_button.draw(WIN)
-        dist = 0
-
-        player_hand_value_text = main_font.render(f'Total value: {player.hand_value}', 1, (255, 255, 255))
-        WIN.blit(player_hand_value_text, (10, 500))
-
-        comp_hand_value_text = main_font.render(f'Total value: {computer.hand_value}', 1, (255, 255, 255))
-        WIN.blit(comp_hand_value_text, (10, 150))
-
-
-        for card in player.hand:
-            x_pos = (900/len(player.hand)) + dist
-            card.draw(WIN, x_pos, 560)
-            dist += 150
-
-        if len(computer.hand) == 1:
-            card1_comp.draw(WIN, 450, 0)
-            WIN.blit(card_backside_image, (600, 0))
-
-        else:
-            dist = 0
-            for card in computer.hand:
-                x_pos = (900/len(computer.hand)) + dist
-                card.draw(WIN, x_pos, 0)
-                dist += 150
-
-        if gamestate.outcome == 'Player_won':
-            outcome_label = main_font.render(f'You won, you receive 200 credits', 1, (255,255,255))
-            WIN.blit(outcome_label, (400, 350))
-
-        elif gamestate.outcome  == 'Tie':
-            outcome_label = main_font.render(f'Tie! You get your credits back, ', 1, (255,255,255))
-            WIN.blit(outcome_label, (400, 350))
-
-        elif gamestate.outcome  == 'Computer_won':
-            outcome_label = main_font.render(f'You lost!', 1, (255,255,255))
-            WIN.blit(outcome_label, (400, 350))
-
-        else:
-            outcome_label = None
-
-        pygame.display.update()
-
-
-    pass_label = main_font.render('You have chosen to pass, now the computer goes', 1, (255, 255, 255))
-    busted_label = main_font.render('Busted!', 1, (255, 255, 255))
-
-    
-    while gamestate.run:
-        #clock.tick(60)
-        start_screen()
-
-        while gamestate.next_round:
-            draw_window()
-
-
-            deck = Deck()
-            deck.shuffle_deck()
-
-            inlay = 100
-            player.inlay(inlay)
-
-
-
-            card1 = deck.deal_one()
-            card1.draw(WIN, 500, 500)
-
-            card2 = deck.deal_one()
-            card2.draw(WIN, 650, 500)
-
-            update_hand(user = player, card = card1)
-            update_hand(user = player, card = card2)
-            
-            card1_comp = deck.deal_one()
-            update_hand(user = computer, card = card1_comp)
-
-            card1_comp.draw(WIN, 500, 0)
-            WIN.blit(card_backside_image, (650, 0))
-            
-
-            pygame.display.update()
-            if card1.rank == card1.rank:
-                resume = False
-                while not resume:
-                    event = pygame.event.wait()
-                    if split_button.draw(WIN):
-                        new_hand = Hand()
-                        update_hand(user = new_hand, card = card2)
-                        draw_window()
-
-
-                    elif pass_button.draw(WIN):
-                        resume = True
-                        Passing = True
-                        WIN.blit(pass_label, (10,10))
-                        break
-                    elif event.type == pygame.QUIT:
-                        pygame.quit()
-                        sys.exit()
-            Passing = False
-            draw_window()
-
-
-
-#%%
-
-
-
-            while player.hand_value < 21 and Passing == False:
-                Hit = False
-                
-                while not Hit:
-                    event = pygame.event.wait()
-                    if hit_button.draw(WIN):
-                        Hit = True
-                        new_card = deck.deal_one()
-                        update_hand(user = player, card = new_card)
-                        draw_window()
-
-
-                    elif pass_button.draw(WIN):
-                        Hit = True
-                        Passing = True
-                        WIN.blit(pass_label, (10,10))
-                        break
-                    elif event.type == pygame.QUIT:
-                        pygame.quit()
-                        sys.exit()
-                
-                WIN.blit(busted_label, (10,10))
-
-                if player.hand_value > 21:
-                    if len(player.aces) > 0:
-                        player.hand_value -= 10
-                        player.remove_ace()
-                        draw_window()
-                    else:
-                        gamestate.player_bust = True
-                        break
-
-                if Passing == False:
-                    Hit = False
-
-            gamestate.turn = 'Computer'
-            draw_window()
-            time.sleep(3)
-
-            if gamestate.player_bust:
-                gamestate.outcome = 'Computer_won'
-                draw_window()
-
-            else:
-                card2_comp = deck.deal_one()
-
-                update_hand(user = computer, card = card2_comp)   
-                draw_window()
-                
-                if computer.hand_value == player.hand_value and computer.hand_value >= 16 and len(computer.aces) == 0:
-                    gamestate.outcome = 'Tie'
-                    outcome_label = main_font.render(f'Computer passed', 1, (255,255,255))
-                    WIN.blit(outcome_label, (500, 500))
-
-                if computer.hand_value > player.hand_value:
-                    gamestate.outcome = 'Computer_won'
-
-            while computer.hand_value < 21 and computer.hand_value < player.hand_value and gamestate.player_bust == False:
-                new_card = deck.deal_one()
-                update_hand(user = computer, card = new_card)
-
-                comp_draw_label = main_font.render(f'Computer gets a card', 1, (255,255,255))
-                WIN.blit(comp_draw_label, (500, 350))
-                pygame.display.update()
-
-                time.sleep(3)
-
-                if computer.hand_value > 21:
-
-                    if len(computer.aces) > 0:
-                        computer.hand_value -= 10
-                        computer.remove_ace()
-                        draw_window()
-
-                    else:
-                        gamestate.outcome = 'Player_won'
-                        break
-
-                if computer.hand_value > player.hand_value:
-
-                    gamestate.outcome = 'Computer_won'
-                    break
-
-                if computer.hand_value == player.hand_value and computer.hand_value >= 16 and len(computer.aces) == 0:
-
-                    gamestate.outcome = 'Tie'
-                    break
-
-                if computer.hand_value == 21 and player.hand_value == 21:
-                    gamestate.outcome = 'Tie'
-                    break
-
-                draw_window()
-            draw_window()
-            if gamestate.outcome == 'Player_won':
-                player.add_to_budget(inlay_won = inlay * 2)
-
-            elif gamestate.outcome == 'Tie':
-                player.add_to_budget(inlay_won = inlay)
-
-            
-            time.sleep(3)
-
-            gamestate.outcome = None
-            draw_window()
-            player.reset_hand()
-            computer.reset_hand()
-            while not gamestate.quit:
-                continue_button.draw(WIN)
-                quit_button.draw(WIN)
-                pygame.display.update()
-                event = pygame.event.wait()
-                if continue_button.draw(WIN):
-                    gamestate.reset()
-                    break
-
-                
-                elif quit_button.draw(WIN):
-                    gamestate.next_round = False
-                    break
-                elif event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-
-            
-            if not gamestate.next_round:
-                break
-
-            draw_window()
-            
-
-            if player.budget == 0:
-                gamestate.run = False
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-
-
-main()
-
-
-
-# %%
